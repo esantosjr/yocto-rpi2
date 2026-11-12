@@ -1,46 +1,58 @@
 # yocto-rpi2
-Yocto project in Raspberry Pi 2 for learning.
 
-## Build with kas
+Yocto Scarthgap project for learning on Raspberry Pi 2. Build directly with
+BitBake; no kas setup is required.
 
-The kas configuration pins Poky and meta-raspberrypi to the exact Scarthgap
-commits used by the working Raspberry Pi 2 image. External repositories,
-build output, and caches are excluded from Git.
+## Upstream layers
 
-Install kas in an isolated environment (Ubuntu/Debian):
-
-```bash
-sudo apt install python3-venv
-python3 -m venv .venv
-.venv/bin/pip install kas
-```
-
-From the project root, in a fresh terminal without a previously sourced Yocto
-environment:
+These repositories are excluded from Git. On a new checkout, fetch the same
+revisions used by the working image:
 
 ```bash
-KAS_BUILD_DIR=build-kas .venv/bin/kas build kas/raspberrypi2.yml
+git clone --branch scarthgap https://git.yoctoproject.org/poky
+git -C poky checkout 6b7c1066f778db5a6b3e35400617b10342988fa8
+git clone --branch scarthgap https://github.com/agherzan/meta-raspberrypi.git
+git -C meta-raspberrypi checkout 018d44467c4f09eb63f8ea5e86e85d755250cf89
 ```
 
-Use `build-kas` because the original `build` tree was moved from another path
-and retains absolute paths. The existing build and caches are left untouched.
-The first kas build creates its own caches and may require substantial disk
-space. Do not run the original and kas builds concurrently against the same
-layer checkouts.
+The existing checkouts can be reused without cloning again.
 
-The resulting image and block map are in:
+## Build
+
+Run in Bash, as your normal user, from the project root:
+
+```bash
+bash
+source poky/oe-init-build-env build
+bitbake core-image-base
+```
+
+`build/conf/local.conf` selects Raspberry Pi 2, enables Dropbear SSH, and
+preserves the IPv4/source-mirror download workaround. `bblayers.conf` uses
+paths relative to the build directory.
+
+`TMPDIR` is set to `${TOPDIR}/tmp-bitbake` because the original build was
+moved from another directory. Downloads and shared-state caches are retained.
+The old temporary build output and `build-kas/` are not deleted automatically.
+
+New images are generated in:
 
 ```text
-build-kas/tmp/deploy/images/raspberrypi2/
+build/tmp-bitbake/deploy/images/raspberrypi2/
 ```
 
-The image includes Dropbear SSH. `debug-tweaks` permits root login without a
-password and is intended for development only.
+The development image permits root SSH login without a password. Set a
+password on the target with `passwd`.
 
-Commit only the project configuration, documentation, custom layers, and
-application sources. Publish generated images as release assets instead.
+## Version control
 
-```bash
-git add .gitignore kas/raspberrypi2.yml README.md
-git commit -m "Add pinned kas configuration for Raspberry Pi 2"
-```
+The `.gitignore` keeps upstream checkouts, downloads, caches, generated images,
+and other build output out of Git. Only `local.conf` and `bblayers.conf` are
+included from the build directory. Keep custom layers, recipes, patches, and
+application source code tracked normally. Publish image binaries separately.
+
+## Ubuntu 24.04 user namespaces
+
+The previously observed AppArmor user-namespace error is a host restriction
+that also applies when invoking BitBake directly. Removing kas does not fix
+that restriction. No AppArmor profile has been installed by this project.
