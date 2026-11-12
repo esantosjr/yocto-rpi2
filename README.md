@@ -56,3 +56,39 @@ application source code tracked normally. Publish image binaries separately.
 The previously observed AppArmor user-namespace error is a host restriction
 that also applies when invoking BitBake directly. Removing kas does not fix
 that restriction. No AppArmor profile has been installed by this project.
+
+## hello-pi learning application
+
+The C source, MIT license, and recipe are in
+`meta-mylayer/recipes-apps/hello-pi/`. The recipe uses Yocto's cross compiler
+and installs the application as `/usr/bin/hello-pi`.
+
+`meta-mylayer/recipes-core/images/core-image-base.bbappend` includes the
+application in `core-image-base` automatically. The layer must be listed in
+`build/conf/bblayers.conf` (it is already enabled in this checkout).
+
+From the project root, initialize the environment and build:
+
+```bash
+bash
+source poky/oe-init-build-env build
+bitbake hello-pi
+bitbake core-image-base
+```
+
+Flash the newly generated image, boot the Pi, and run over SSH:
+
+```bash
+hello-pi
+```
+
+Expected output:
+
+```text
+Hello from Raspberry Pi!
+Built with Yocto from meta-mylayer.
+```
+
+Rebuild with `bitbake hello-pi` after editing the source. Run
+`bitbake core-image-base` again to include the updated package in a new image.
+The ARM executable is intended for the Pi, not the x86 build computer.
