@@ -1,0 +1,16 @@
+# External layers fetched at the commits recorded in kas/raspberrypi2.yml.
+/poky/
+/meta-raspberrypi/
+/sources/
+
+# Generated build trees, downloads, and shared-state caches.
+/build/
+/build-*/
+/downloads/
+/sstate-cache/
+
+# Local Python environments and credentials.
+/.venv/
+.env
+.env.*
+!.env.example
